@@ -43,16 +43,15 @@ ik_q3 = sqrt((x^2 + y^2) + (z - L(1))^2) - L(2);
 O = [
     cos(q1)*(q3 + L(2)) * cos(q2);
     sin(q1)*(q3 + L(2)) * cos(q2);
-    L(1) + sin(q2)*(q3 + L(2));];
+    L(1) + sin(q2)*(q3 + L(2));
+    cos(q1);
+    sin(q1);
+    q1];
 
-J_classical = [diff(O, q1), -diff(O, q2), diff(O, q3)];
-%Need add arguments
-J_om = [0, -sin(q1), 0; 0, cos(q1), 0; 1, 0, 0];
-J_classical_final = simplify([J_classical; J_om])
+J_classical = simplify([diff(O, q1), -diff(O, q2), diff(O, q3)])
 
 % Jacobian. Scew teory
-% Find origin of each joint
-
+% Origin
 T00= eye(4);
 T01= Rz(q1)*Tz(L(1));
 T02= Rz(q1)*Tz(L(1))*Ry(-q2)*Tx(L(2)+q3);
@@ -93,3 +92,20 @@ J_numerical= [simplify(J1), simplify(J2), simplify(J3)]
 %We can find angles by = 0
 det_Jv_rot = simplify(det(J_numerical(1:3,1:3)))
 det_Jv_trans = simplify(det(J_numerical(4:6,1:3)))
+
+
+%Velocity
+syms t
+q1Changes = sin(t);
+q2Changes = cos(2*t);
+q3Changes = sin(3*t);
+
+J_velocity = simplify(subs(J_numerical, {L(1), L(2), q1, q2, q3}, {L(1), L(2), q1Changes, q2Changes, q3Changes}));
+velocity = diff([q1Changes q2Changes q3Changes]');
+
+time = 0:0.1:5;
+velocity_data = subs(J_velocity * velocity, {t}, {time});
+
+plot(time, velocity_data)
+title('Velocity of the tool frame')
+legend('Tx', 'Ty', 'Tz','Rx', 'Ry', 'Rz')
